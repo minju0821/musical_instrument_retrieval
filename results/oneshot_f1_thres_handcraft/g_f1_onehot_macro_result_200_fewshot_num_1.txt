@@ -1,0 +1,8 @@
+threshold 0.5 -> loss가 0.5이상인 악기는 pass
+
+F1 Score : 0.377642592759851
+F1 Score (random) : 0.06702229774512522
+Recall : 0.3073653021030965
+Recall (random) : 0.1034137653905842
+Precision : 0.7391321787281033
+Precision (random) : 0.05393844521621799
