@@ -1,17 +1,16 @@
 import os
-import time
 import random
 import argparse
 from tqdm.auto import tqdm
 
+import wandb
 import torch
 import torch.nn as nn
-import wandb
 import numpy as np
 
 from models import ConvNet
 from dataset import RenderedInstrumentDataset
-from evaluation import EER
+from evaluation import eval_single_inst_enc
 
 random.seed(0)
 torch.manual_seed(0)
@@ -24,7 +23,7 @@ def parse_args():
     parser.add_argument('--gpus', type=str, default='0, 1')
     parser.add_argument('--batch_size', type=int, default=128)
     parser.add_argument('--lr', type=float, default=1e-4)
-    parser.add_argument('--save_dir', type=str, default='/data3/aiproducer_inst/haessun_models/single_inst_encoder/')
+    parser.add_argument('--checkpoint_dir', type=str, default='/data3/aiproducer_inst/haessun_models/single_inst_encoder')
 
     parser.add_argument('--wandb', type=bool, default=True)
     parser.add_argument('--project_name', type=str, default='submission')
@@ -59,9 +58,9 @@ def train(model, train_loader, optimizer, loss_func, epoch, args, DEVICE):
     
     train_loss = np.mean(train_loss)
     train_acc = 100 * correct / data_len
-    print("Train Loss : {:.3f}, Train Acc. : {:.3f}".format(train_loss, train_acc))
+    print(f"Train Loss : {train_loss:.3f}, Train Acc. : {train_acc:.3f}")
 
-    model_name = '{}epoch_{}_trLoss_{:.3f}.pt'.format(args.save_dir, epoch, train_loss)
+    model_name = f'{args.checkpoint_dir}/epoch_{epoch}_trLoss_{train_loss:.3f}.pt'
     torch.save(model.state_dict(), model_name)
 
     if args.wandb:
@@ -76,7 +75,7 @@ def evaluate(model, args, DEVICE):
     model.eval()
 
     with torch.no_grad():
-        eer = EER(model, DEVICE)
+        eer = eval_single_inst_enc(model, DEVICE)
         eer_score, threshold = eer.evaluate()
         print(f'EER : {eer_score}, EER_thres. : {threshold}')
 
@@ -104,7 +103,7 @@ if __name__=='__main__':
     if args.wandb:
         wandb.init(
             project = args.project_name,
-            name = "Single-Instrument-Encoder, class={}, batch={}, lr={}".format(args.num_class, args.batch_size, args.lr),
+            name = f"Single-Instrument-Encoder, class={args.num_class}, batch={args.batch_size}, lr={args.lr}",
         )
         wandb.config = {
             "learning_rate" : args.lr,
