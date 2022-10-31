@@ -21,9 +21,13 @@ INST_FAM_LIST = ["keyboard", "mallet", "organ", "guitar", "bass", "string", "voc
 random.seed(0)
 torch.manual_seed(0)
 
+""" Use Rendered Instrument Dataset (Nlakh) for default """
+
 # synthesize midi data w/ nsynth on the fly
+# nsynth dataset path example : "/data/nsynth/nsynth-inst-train/brass/acoustic/0/brass_acoustic_000-067-075.wav"
+# lakh   dataset path example : "/data/lakh/train/brass/2000.mid"
 class InstrumentDataset(Dataset):
-    def __init__(self, split='train', nsynth_path="/data4/aiproducer_inst/nsynth/", midi_path="/data4/aiproducer_inst/clean_midi_inst_new/"):
+    def __init__(self, split='train', nsynth_path="/data/nsynth/", midi_path="/data/lakh/"):
         self.nsynth_path = Path(nsynth_path) / f"nsynth-inst-{split}"
         self.nsynth_dirs = glob.glob(str(self.nsynth_path)+"/*/*/*")
         self.nsynth_dirs.sort()
