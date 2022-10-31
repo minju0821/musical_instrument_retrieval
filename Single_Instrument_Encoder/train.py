@@ -10,7 +10,7 @@ import numpy as np
 
 from models import ConvNet
 from dataset import RenderedInstrumentDataset
-from evaluation import eval_single_inst_enc
+from evaluation import EER
 
 random.seed(0)
 torch.manual_seed(0)
@@ -77,7 +77,7 @@ def evaluate(model, args, DEVICE):
     model.eval()
 
     with torch.no_grad():
-        eer = eval_single_inst_enc(model, DEVICE)
+        eer = EER(model, data_path=args.dataset_dir, device=DEVICE)
         eer_score, threshold = eer.evaluate()
         print(f'EER : {eer_score}, EER_thres. : {threshold}')
 
