@@ -20,21 +20,28 @@ torch.manual_seed(0)
 
 def parse_args():
     parser = argparse.ArgumentParser()
+    parser.add_argument('--gpus', type=str, default="")
+
     parser.add_argument('--num_class', type=int, default=953)
     parser.add_argument('--num_epochs', type=int, default=100)
     parser.add_argument("--dataset", type=str, default="rendered", choices=["rendered", "random_mix"])
     parser.add_argument("--model_size", type=str, default="Large", choices=["Large", "Small"])
-
-    parser.add_argument('--gpus', type=str, default="")
     parser.add_argument('--batch_size', type=int, default=128)
     parser.add_argument('--lr', type=float, default=1e-3)
-    parser.add_argument("--checkpoint_dir", type=str, default="/data3/aiproducer_inst/haessun_models/Multi_Instrument_Encoder")
-    
-    parser.add_argument("--one_shot_idx", type=int, default=1)
+
+    parser.add_argument("--get_idx", type=int, default=1, help="1 ~ 1000, read the instructions in dataset.py -> EmbeddingLibraryDataset")
     parser.add_argument("--eval_avg", type=str, default="macro", choices=["micro", "macro", "weighted"])
 
-    parser.add_argument('--wandb', type=bool, default=True)
-    parser.add_argument('--project_name', type=str, default='submission')
+    # "/data3/aiproducer_inst/f_emb/submission/multi_inst_emb"
+    parser.add_argument('--nlakh_dataset_dir', type=str, default=None, help="Path to the rendered Nlakh multi dataset directory.")
+    # "/data4/aiproducer_inst/rendered_single_inst/"
+    parser.add_argument('--random_dataset_dir', type=str, default=None, help="Path to the rendered Nlakh single dataset directory.")
+    # f'/data3/aiproducer_inst/f_emb/submission/single_inst_emb/{split}_default_nfft/*/'
+    parser.add_argument('--single_inst_emb_dir', type=str, default=None, required=True, help="Path to the output embeddings of single instruments processed with trained Single Instrument Encoder.")
+    parser.add_argument("--checkpoint_dir", type=str, default="/data3/aiproducer_inst/haessun_models/Multi_Instrument_Encoder")
+
+    parser.add_argument('--wandb', type=bool, default=True, help="Make it False when debugging.")
+    parser.add_argument('--project_name', type=str, default='Multi Instrument Encoder')
 
     args = parser.parse_args()
     return args
@@ -178,16 +185,16 @@ if __name__=='__main__':
 
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
     if args.dataset == "rendered":
-        train_dataset = RenderedNlakhDataset(args.data_dir, "train", args.loss)
+        train_dataset = RenderedNlakhDataset(args.nlakh_dataset_dir, "train", args.loss)
     elif args.dataset == "random_mix":
-        train_dataset = RandomMixMultiInstrumentDataset(split="train")
+        train_dataset = RandomMixMultiInstrumentDataset(audio_path=args.random_dataset_dir, single_inst_emb_path=args.single_inst_emb_dir, split="train")
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=4)
     
-    valid_dataset = RenderedNlakhDataset(args.data_dir, "valid", args.loss)
+    valid_dataset = RenderedNlakhDataset(data_path = args.data_dir, split = "valid")
     valid_loader = DataLoader(valid_dataset, batch_size=args.batch_size, num_workers=4, shuffle=False)
 
-    # build target embedding library for multi_inst_encoder with 1 sample for each unseen instrument class.
-    emb_lib_dataset = EmbeddingLibraryDataset(split='valid', get_idx=args.one_shot_idx)
+    # build target embedding library for multi_inst_encoder with 1 sample of given idx for each unseen instrument class.
+    emb_lib_dataset = EmbeddingLibraryDataset(path=args.single_inst_emb_dir, split='valid', get_idx=args.get_idx)
     emb_lib_loader = DataLoader(emb_lib_dataset, batch_size=1, shuffle=False)
     lib = torch.zeros((53, 1024)).to(DEVICE)
     for idx, emb in tqdm(enumerate(emb_lib_loader)):
