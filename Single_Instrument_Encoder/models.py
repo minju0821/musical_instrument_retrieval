@@ -1,7 +1,9 @@
 import torch
 from torch import nn
 
-# default model architecture for f_enc -> last linear layer output dimension is 953 (for 953 classes)
+# default model architecture for single_inst_encoder
+# last(2nd) linear layer output dimension is 953 (for 953 classes)
+# 1st linear layer output dimension is 1024 for instrument embedding
 class ConvNet(nn.Module):
     def __init__(self, out_classes):
         super(ConvNet, self).__init__()

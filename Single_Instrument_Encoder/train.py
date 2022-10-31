@@ -17,16 +17,18 @@ torch.manual_seed(0)
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--num_class', type=int, default=953)
+    parser.add_argument('--gpus', type=str, default=None)
+
+    parser.add_argument('--num_class', type=int, default=953, help='Number of classes for training instruments. These instruments should not be overlapped with the validation instruments.')
     parser.add_argument('--num_epochs', type=int, default=10)
-    
-    parser.add_argument('--gpus', type=str, default='0, 1')
     parser.add_argument('--batch_size', type=int, default=128)
     parser.add_argument('--lr', type=float, default=1e-4)
-    parser.add_argument('--checkpoint_dir', type=str, default='/data3/aiproducer_inst/haessun_models/single_inst_encoder')
 
-    parser.add_argument('--wandb', type=bool, default=True)
-    parser.add_argument('--project_name', type=str, default='submission')
+    parser.add_argument('--dataset_dir', type=str, default=None, required=True, help="Path to the rendered Nlakh dataset directory.")
+    parser.add_argument('--checkpoint_dir', type=str, default=None, required=True, help="Checkpoint path to save trained parameters.")
+
+    parser.add_argument('--wandb', type=bool, default=True, help="Make it False when debugging.")
+    parser.add_argument('--project_name', type=str, default='Single Instrument Encoder')
 
     args = parser.parse_args()
     return args
@@ -111,7 +113,7 @@ if __name__=='__main__':
         }
         wandb.watch(model)
 
-    train_dataset = RenderedInstrumentDataset(split='train')
+    train_dataset = RenderedInstrumentDataset(split='train', data_path=args.dataset_dir)
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, num_workers=4, shuffle=True)
 
     for epoch in range(args.num_epochs):
