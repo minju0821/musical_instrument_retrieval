@@ -73,7 +73,7 @@ class InstrumentDataset(Dataset):
 
 # pre-rendered wav. data (midi w/ nsynth) : to save data loading time
 class RenderedInstrumentDataset(Dataset):
-    def __init__(self, split = "train", data_path = "/data4/aiproducer_inst/rendered_single_inst/",
+    def __init__(self, split = "train", data_path = None,
                  num_samples_per_inst=1000):
         assert num_samples_per_inst == 1000, "1000 samples for each instrument"
         self.num_samples_per_inst = num_samples_per_inst

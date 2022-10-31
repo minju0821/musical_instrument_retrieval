@@ -8,21 +8,21 @@ import torch
 import librosa
 import numpy as np
 from torch.utils.data import Dataset
-from torch.utils.data import DataLoader
 
 random.seed(0)
 torch.manual_seed(0)
+
 SAMPLING_RATE = 16000
 
 """
 - before training the multi_instrument_encoder
     1. save all the embeddings with trained single_instrument_encoder
     2. save preprocessed mixture audios in the form of mel-spectrogram for faster training
-- mix.npy : mel-spectrogram of mixture audio
-- {num}.npy : embedding of single instrument audio extracted by trained single_instrument_encoder
+- mix_mel.npy : mel-spectrogram of mixture audio
+- {num}_emb.npy : embedding of single instrument audio extracted by trained single_instrument_encoder
 """
 class RenderedNlakhDataset(Dataset):
-    def __init__(self, data_path = "/data4/aiproducer_inst/f_embeddings/f_haessun/rendered_multi_inst_3_f_emb", split = None):
+    def __init__(self, data_path = None, split = None):
         super().__init__()
         self.data_path = data_path
         self.split = split
@@ -53,7 +53,7 @@ class RenderedNlakhDataset(Dataset):
 
 # randomly mix single instrument tracks to make mixture audio
 class RandomMixMultiInstrumentDataset(Dataset):
-    def __init__(self, split="train", audio_path = "/data4/aiproducer_inst/rendered_single_inst/", min_tracks=2, max_tracks=9):
+    def __init__(self, audio_path = None, single_inst_emb_path = None, split = None, min_tracks=2, max_tracks=9):
         self.split = split
         self.audio_path = Path(audio_path) / split
         if self.split == "train":
@@ -61,7 +61,7 @@ class RandomMixMultiInstrumentDataset(Dataset):
         elif self.split == "valid":
             self.num_inst = 53
 
-        self.single_emb_path = sorted(glob.glob(f'/data4/aiproducer_inst/f_embeddings/f_haessun/single_f_emb_npy/{split}_default_nfft/*/'))
+        self.single_emb_path = sorted(glob.glob(single_inst_emb_path + "/*/"))
         
         self.min_tracks = min_tracks
         self.max_tracks = max_tracks
@@ -102,11 +102,14 @@ class RandomMixMultiInstrumentDataset(Dataset):
         num_tracks = torch.tensor(num_tracks, dtype=torch.int32)
         return mix_audio, emb_list, inst_idx, num_tracks
 
-# single instrument dataset의 모든 data를 f_enc에 통과시켜서 npy로 저장한 것에 대하여, get_idx에 해당하는 file만을 불러온다.
-# ex) get_idx = 1 -> 모든 악기 폴더에서 0001.npy 파일만 불러옴 (1024)
+"""
+- for all Nlakh data of single instrument, process the audio with trained single_instrument_encoder and save it in the form of .npy
+- this dataset returns the embedding of single instrument of given index for each instrument class
+- ex) get_idx = 1 -> returns only 0001.npy in every single instrument class embeddings
+"""
 class EmbeddingLibraryDataset(Dataset):
-    def __init__(self, path = "/data4/aiproducer_inst/f_embeddings/f_haessun/single_f_emb_npy", split = 'valid', get_idx = None):
-        self.dir_list = sorted(glob.glob(f'{path}/{split}_default_nfft/*'))
+    def __init__(self, path = None, split = 'valid', get_idx = None):
+        self.dir_list = sorted(glob.glob(f'{path}/{split}/*'))
         self.get_idx = get_idx
 
     def __len__(self):
@@ -114,5 +117,5 @@ class EmbeddingLibraryDataset(Dataset):
 
     def __getitem__(self, idx):
         file_list = sorted(glob.glob(f'{self.dir_list[idx]}/*.npy'))
-        emb = np.load(file_list[self.get_idx])
+        emb = np.load(file_list[self.get_idx-1])
         return emb
