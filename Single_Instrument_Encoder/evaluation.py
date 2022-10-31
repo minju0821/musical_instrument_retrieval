@@ -11,7 +11,7 @@ import numpy as np
 
 # customized dataset for validation to sample the number of num_eval samples of same instrument. (inst_idx)
 class InstrumentDataset_eval:
-    def __init__(self, split = "valid", data_path = "/data4/aiproducer_inst/rendered_single_inst/",
+    def __init__(self, split = "valid", data_path = None,
                  num_samples_per_inst=1000):
         assert num_samples_per_inst == 1000
         self.num_samples_per_inst = num_samples_per_inst
@@ -42,12 +42,12 @@ Single Instrument Encoder denoted as self.encoder
 - num_eval : num_eval number of samples for both positive and negative instruments
 """
 class EER:
-    def __init__(self, encoder, device, num_enroll = 5, num_eval = 20):
+    def __init__(self, encoder, data_path, device, num_enroll = 5, num_eval = 20):
         self.encoder = encoder
         self.device = device
         self.num_enroll = num_enroll
         self.num_eval = num_eval
-        self.inst_data = InstrumentDataset_eval()
+        self.inst_data = InstrumentDataset_eval(data_path = data_path)
 
     def dist(self, a, b):
         dist = 1 - torch.sum(a*b) / (torch.norm(a) * torch.norm(b) + 1e-08)
