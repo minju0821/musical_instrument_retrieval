@@ -17,9 +17,9 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--num_class', type=int, default=953)
 
-    parser.add_argument('--gpus', type=str, default="0, 1")
-    parser.add_argument("--checkpoint_dir", type=str, default="/data3/aiproducer_inst/haessun_models/single_inst_encoder/epoch_8_trLoss_0.295.pt")
-    parser.add_argument("--emb_save_dir", type=str, default="/data3/aiproducer_inst/f_emb/submission/multi_inst_emb")
+    parser.add_argument('--gpus', type=str, default=None)
+    parser.add_argument("--checkpoint_dir", type=str, default=None, required=True, help="Path to checkpoint directory of Single Instrument Encoder.")
+    parser.add_argument("--emb_save_dir", type=str, default=None, required=True)
 
     args = parser.parse_args()
     return args
@@ -53,7 +53,7 @@ if __name__=='__main__':
             idx_list = idx_list[0].to(DEVICE)
 
             mix_to_save = mix_mel.squeeze()
-            track_list_to_save = single_inst_enc(track_list)
+            track_list_to_save = single_inst_enc(track_list)[1]
 
             path_to_save = train_path + str(i+1).zfill(6)
             if not os.path.exists(path_to_save):
@@ -70,7 +70,7 @@ if __name__=='__main__':
             idx_list = idx_list[0].to(DEVICE)
 
             mix_to_save = mix_mel.squeeze()
-            track_list_to_save = single_inst_enc(track_list)
+            track_list_to_save = single_inst_enc(track_list)[1]
 
             path_to_save = valid_path + str(i+1).zfill(6)
             if not os.path.exists(path_to_save):
