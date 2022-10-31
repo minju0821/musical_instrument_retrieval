@@ -1,5 +1,5 @@
 # Show Me the Instruments: Musical Instrument Retrieval from Mixture Audio
-This repository contains the code and the [dataset](https://github.com/minju0821/musical_instrument_retrieval/blob/main/dataset/readme.txt) for our paper,
+This repository contains the code and the [dataset](https://github.com/minju0821/musical_instrument_retrieval/blob/main/dataset/README.md) for our paper,
 
 * Kyungsu Kim*, Minju Park*, Haesun Joung*, Yunkee Chae, Yeongbeom Hong, Seonghyeon Go, Kyogu Lee. _“Show Me the Instruments: Musical Instrument Retrieval from Mixture Audio”._ 2022.
 
