@@ -19,20 +19,20 @@ torch.manual_seed(0)
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--project_name', type=str, default=None)
-    
-    parser.add_argument('--gpus', type=str, default="0, 1")
+    parser.add_argument('--gpus', type=str, default=None)
+
     parser.add_argument('--batch_size', type=int, default=32)
     parser.add_argument('--lr', type=float, default=1e-3)
 
-    parser.add_argument('--model_path', type=str, default='/data4/aiproducer_inst/haessun_models/f_enc/f_enc_rendered_02/class953_epoch8_iter1200_trLoss_0.300_trAcc_89.031')
+    parser.add_argument('--dataset_dir', type=str, default=None, required=True, help="Path to the rendered Nlakh dataset directory.")
+    parser.add_argument('--checkpoint_dir', type=str, default=None, required=True, help="Path for the model to be evaluated.")
 
     args = parser.parse_args()
     return args
 
 # customized dataset for validation to sample the number of num_eval samples of same instrument. (inst_idx)
 class InstrumentDataset_eval:
-    def __init__(self, split = "valid", data_path = "/data4/aiproducer_inst/rendered_single_inst/",
+    def __init__(self, split = "valid", data_path = None,
                  num_samples_per_inst=1000):
         assert num_samples_per_inst == 1000
         self.num_samples_per_inst = num_samples_per_inst
@@ -63,12 +63,12 @@ Single Instrument Encoder denoted as self.encoder
 - num_eval : num_eval number of samples for both positive and negative instruments
 """
 class EER:
-    def __init__(self, encoder, device, num_enroll = 5, num_eval = 20):
+    def __init__(self, encoder, data_path, device, num_enroll = 5, num_eval = 20):
         self.encoder = encoder
         self.device = device
         self.num_enroll = num_enroll
         self.num_eval = num_eval
-        self.inst_data = InstrumentDataset_eval()
+        self.inst_data = InstrumentDataset_eval(data_path=data_path)
 
     def dist(self, a, b):
         dist = 1 - torch.sum(a*b) / (torch.norm(a) * torch.norm(b) + 1e-08)
@@ -124,11 +124,11 @@ def main():
 
     model_eval = ConvNet(out_classes=953).cuda()
     model_eval = nn.DataParallel(model_eval).to(DEVICE)
-    model_eval.load_state_dict(torch.load(args.model_path, map_location=DEVICE), strict=False)
+    model_eval.load_state_dict(torch.load(args.checkpoint_dir, map_location=DEVICE), strict=False)
     model_eval.eval()
 
     with torch.no_grad():
-        eer = EER(model_eval, DEVICE)
+        eer = EER(model_eval, data_path=args.dataset_dir, device=DEVICE)
         eer_score, threshold = eer.evaluate()
 
     print(f"EER: {eer_score:.4f}, Threshold: {threshold:.4f}")
