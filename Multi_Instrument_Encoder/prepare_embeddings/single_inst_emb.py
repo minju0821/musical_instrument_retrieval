@@ -17,9 +17,9 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--num_class', type=int, default=953)
 
-    parser.add_argument('--gpus', type=str, default="0, 1")
-    parser.add_argument("--checkpoint_dir", type=str, default="/data3/aiproducer_inst/haessun_models/single_inst_encoder/epoch_8_trLoss_0.295.pt")
-    parser.add_argument("--emb_save_dir", type=str, default="/data3/aiproducer_inst/f_emb/submission/single_inst_emb")
+    parser.add_argument('--gpus', type=str, default=None)
+    parser.add_argument("--checkpoint_dir", type=str, default=None, required=True, help="Path to checkpoint directory of Single Instrument Encoder.")
+    parser.add_argument("--emb_save_dir", type=str, default=None, required=True)
 
     args = parser.parse_args()
     return args
@@ -55,7 +55,7 @@ if __name__=='__main__':
             path_to_save = train_path + str(inst_idx+1).zfill(3)
             if not os.path.exists(path_to_save):
                 os.makedirs(path_to_save)
-            out = single_inst_enc(inst_mel)
+            out = single_inst_enc(inst_mel)[1]
             np.save(f'{path_to_save}/{sample_idx+1:04d}.npy', out.squeeze().cpu().numpy())
 
 
@@ -67,7 +67,7 @@ if __name__=='__main__':
             path_to_save = valid_path + str(inst_idx+1).zfill(2)
             if not os.path.exists(path_to_save):
                 os.makedirs(path_to_save)
-            out = single_inst_enc(inst_mel)
+            out = single_inst_enc(inst_mel)[1]
             np.save(f'{path_to_save}/{sample_idx+1:04d}.npy', out.squeeze().cpu().numpy())
 
             

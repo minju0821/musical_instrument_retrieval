@@ -64,7 +64,7 @@ class ConvNet(nn.Module):
         x = self.pool_drop(self.conv3(x))
 
         x = self.conv4(x)
-        x = self.linear1(x)
-        x = self.linear2(x)
+        l1_out = self.linear1(x)
+        l2_out = self.linear2(l1_out)
 
-        return x
+        return l2_out, l1_out
