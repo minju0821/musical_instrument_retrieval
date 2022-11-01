@@ -31,10 +31,6 @@ class RenderedNlakhDataset(Dataset):
         emb_idx_list = torch.full((9,), -1, dtype=torch.int32)
         emb_list_idx = 0
         for fname in fname_list:
-            
-            if 'mix_audio' in fname or 'summed' in fname:
-                continue
-
             if 'mix' in fname:
                 mix = np.load(fname)
                 mix = torch.tensor(mix, dtype=torch.float32)
