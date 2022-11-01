@@ -21,29 +21,29 @@ VALID_INST = {'bass' : 0, 'brass' : 1, 'flute' : 2, 'guitar' : 3, 'keyboard' : 4
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--num_class', type=int, default=953)
+    parser.add_argument('--gpus', type=str, default=None)
+
+    parser.add_argument('--num_class', type=int, default=53, choices=[53, 10])
+    parser.add_argument("--dataset", type=str, default="random_mix", choices=["rendered", "random_mix"])
     parser.add_argument("--model_size", type=str, default="Large", choices=["Large", "Small"])
-
-    parser.add_argument('--gpus', type=str, default="0, 1")
-    parser.add_argument('--use_single_emb', type=bool, default=False)
-
-    parser.add_argument('--num_class', type=int, default=53, choices=[53, 10, 953, 11])
     parser.add_argument('--get_idx', type=int, default=1, help='1 ~ 1000')
 
-    parser.add_argument('--model_dir', type=str, default="")
-    parser.add_argument('--model_name', type=str, default="462")
+    parser.add_argument('--nlakh_dataset_dir', type=str, default=None, help="Path to the rendered Nlakh multi dataset directory.")
+    parser.add_argument('--single_inst_emb_dir', type=str, default=None, help="Path to the output embeddings of single instruments processed with trained Single Instrument Encoder.")
+    parser.add_argument('--checkpoint_dir', type=str, default=None, help="Path to checkpoint directory of Multi Instrument Encoder.")
 
-    parser.add_argument('--single_inst_enc_dir', type=str, default="")
-    parser.add_argument('--single_inst_enc_name', type=str, default="")
+    parser.add_argument('--use_single_emb', type=bool, default=True, help="If False, get single instrument embedding on the fly.")
+    parser.add_argument('--single_inst_enc_dir', type=str, default=None)
 
     args = parser.parse_args()
     return args
 
 def check_args(args):
-    file_name = f"{args.model_type}_{args.model_dir}_{args.model_name}_numClass_{args.num_class}"
-    f = open(f"{file_name}_emb_lib_idx_{args.get_idx}.txt", "w")
+    model_name = args.checkpoint_dir.split("/")[-1]
+    file_name = f"{args.dataset}_{args.model_size}_{model_name}_{args.num_class}classes"
+    f = open(f"predictions_{file_name}.txt", "w")
 
-    os.environ["CUDA_VISIBLE_DEVICES"]= args.gpu
+    os.environ["CUDA_VISIBLE_DEVICES"]= args.gpus
     DEVICE = torch.device('cuda') if torch.cuda.is_available else torch.device('cpu')
     print("Using PyTorch version: {}, Device: {}".format(torch.__version__, DEVICE))
 
@@ -52,12 +52,12 @@ def check_args(args):
 def load_models(args, DEVICE):
     """ load Multi_Inst_Encoder """
     if args.model_size == "Large":
-        model = timm.create_model('convnext_small_in22ft1k', pretrained=True, in_chans=1, num_classes=9 * 1024, drop_path_rate=0.5).cuda()
+        model = timm.create_model('convnext_small', pretrained=False, in_chans=1, num_classes=9 * 1024, drop_path_rate=0.5).cuda()
     elif args.model_size == "Small":
         model = ConvNet().cuda()
     model = nn.DataParallel(model).to(DEVICE)
 
-    loaded_dict = torch.load(f"{args.model_dir}/{args.model_name}", map_location=DEVICE)
+    loaded_dict = torch.load(args.checkpoint_dir, map_location=DEVICE)
     model.load_state_dict(loaded_dict)
     model.eval()
 
@@ -67,7 +67,7 @@ def load_models(args, DEVICE):
     """ load Single_Inst_Encoder """
     single_inst_enc = ConvNet(out_classes=953).cuda()
     single_inst_enc = nn.DataParallel(single_inst_enc).to(DEVICE)
-    loaded_dict = torch.load(f'{args.single_inst_enc_dir}/{args,single_inst_enc_name}', map_location=DEVICE)
+    loaded_dict = torch.load(args.single_inst_enc_dir, map_location=DEVICE)
     single_inst_enc.load_state_dict(loaded_dict, strict=False)
     single_inst_enc.eval()
 
@@ -80,7 +80,8 @@ def write_result(est_list, ans_list, ran_list, score_list, args):
 
     avg_list = ['micro', 'macro', 'weighted']
 
-    f_result = open(f"result_{args.model_name}_{args.model_size}_class_{args.num_class}_.txt", "w")
+    model_name = args.checkpoint_dir.split("/")[-1]
+    f_result = open(f"result_{args.dataset}_{args.model_size}_{model_name}_{args.num_class}classes.txt", "w")
     
     for avg in avg_list:
         f1 = f1_score(ans_list, est_list, average=avg)
@@ -89,7 +90,7 @@ def write_result(est_list, ans_list, ran_list, score_list, args):
         recall_random = recall_score(ans_list, ran_list, average=avg)
         precision = precision_score(ans_list, est_list, average=avg)
         precision_random = precision_score(ans_list, ran_list, average=avg)
-        if not args.num_class == 10 or not args.num_class == 11:
+        if not args.num_class == 10:
             mAP = average_precision_score(ans_list, score_list, average=avg)
 
         print("AVERAGE METHOD: ", avg)
@@ -99,7 +100,7 @@ def write_result(est_list, ans_list, ran_list, score_list, args):
         print('Recall (random)', recall_random)
         print('Precision', precision)
         print('Precision (random)', precision_random)
-        if not args.num_class == 10 or not args.num_class == 11:
+        if not args.num_class == 10:
             print('mean Avg. Precision ', mAP)
         print()
 
@@ -110,7 +111,7 @@ def write_result(est_list, ans_list, ran_list, score_list, args):
         f_result.write(f'Recall (random) : {str(recall_random)}\n')
         f_result.write(f'Precision : {str(precision)}\n')
         f_result.write(f'Precision (random) : {str(precision_random)}\n')
-        if not args.num_class == 10 or not args.num_class == 11:
+        if not args.num_class == 10:
             f_result.write(f'mean Avg. Precision : {str(mAP)}\n\n')
     
     f_result.close()
@@ -118,13 +119,9 @@ def write_result(est_list, ans_list, ran_list, score_list, args):
 if __name__ == "__main__":
     args = parse_args()
 
-    # VALID_INST[inst_dict[i].split('_')[0]]
+    # VALID_INST[inst_dict[i].split('_')[0]] -> matching instrument index to instrument family index
     if args.num_class == 10:
         f = open('idx_to_fam_inst_valid.json')
-        inst_dict = json.load(f)
-        inst_dict = {y: x for x, y in inst_dict.items()}
-    elif args.num_class == 11:
-        f = open('idx_to_fam_inst_train.json')
         inst_dict = json.load(f)
         inst_dict = {y: x for x, y in inst_dict.items()}
         
@@ -134,26 +131,20 @@ if __name__ == "__main__":
     else:
         model, single_inst_enc = load_models(args, DEVICE)
 
-    #### build embedding library ####
+    """ build embedding library """
     lib = torch.zeros((53, 1024)).to(DEVICE)
-    if args.num_class == 953:
-        emb_lib_dataset = EmbeddingLibraryDataset(split='train', get_idx=args.get_idx)
-    elif args.num_class == 53:
-        emb_lib_dataset = EmbeddingLibraryDataset(split='valid', get_idx=args.get_idx)
+    emb_lib_dataset = EmbeddingLibraryDataset(path=args.single_inst_emb_dir, split='valid', get_idx=args.get_idx)
     emb_lib_loader = DataLoader(emb_lib_dataset, batch_size=1, shuffle=False)
     
     if not args.use_single_emb:
-        for idx, repr in tqdm(enumerate(one_repr_lib_loader)):
+        for idx, repr in tqdm(enumerate(emb_lib_loader)):
             lib[idx] = single_inst_enc(repr.to(DEVICE))
     else:
-        for idx, repr in tqdm(enumerate(one_repr_lib_loader)):
+        for idx, repr in tqdm(enumerate(emb_lib_loader)):
             lib[idx] = repr
 
     """ load validation dataset """
-    if args.num_class == 953 or args.num_class == 11:
-        dataset = RenderedNlakhDataset(split="train")
-    elif args.num_class == 53 or args.num_class == 10:
-        dataset = RenderedNlakhDataset(split="valid")
+    dataset = RenderedNlakhDataset(data_path=args.nlakh_dataset_dir , split="valid")
     valid_loader = DataLoader(dataset, batch_size=1, num_workers=4, shuffle=False)
     
     f1_score_list = []
@@ -170,13 +161,13 @@ if __name__ == "__main__":
 
     cos_loss = nn.CosineEmbeddingLoss(reduction='none')
     cos_sim = nn.CosineSimilarity()
-    for batch_idx, (mix_audio, inst_idx_list, track_len) in tqdm(enumerate(valid_loader)):
-        mix_audio, inst_idx_list, track_len = mix_audio.to(DEVICE), inst_idx_list.to(DEVICE), track_len.to(DEVICE)
+    for batch_idx, (mix, emb_idx_list) in tqdm(enumerate(valid_loader)):
+        mix, emb_idx_list = mix.to(DEVICE), emb_idx_list.to(DEVICE)
 
         if args.model_size == "Large":
-            output = model(mix_audio.squeeze().unsqueeze(dim=0).unsqueeze(dim=0))
+            output = model(mix.squeeze().unsqueeze(dim=0).unsqueeze(dim=0))
         elif args.model_size == "Small":
-            output = model(mix_audio.squeeze().unsqueeze(dim=0))
+            output = model(mix.squeeze().unsqueeze(dim=0))
         output = torch.reshape(output, (output.size()[0], 9, -1))
         est_emb = output[0]
 
@@ -185,8 +176,6 @@ if __name__ == "__main__":
         for idx, est in enumerate(est_emb):
             loss = cos_loss(est.repeat((53, 1)), lib, torch.ones(1).to(DEVICE))
             min_idx = torch.argmin(loss)
-            if args.thres_on and loss[min_idx] > args.thres:
-                continue
             if args.num_class == 10:
                 min_idx = VALID_INST[inst_dict[min_idx.item()].split('_')[0]]
             est_one_hot[min_idx] = 1
@@ -207,9 +196,9 @@ if __name__ == "__main__":
         ran_list.append(random_one_hot)
 
         """ answer one-hot """ 
-        inst_idx_list = inst_idx_list.cpu().detach().numpy()
+        emb_idx_list = emb_idx_list.cpu().detach().numpy()
         ans_one_hot = np.zeros(args.num_class, dtype=int)
-        inst_tmp = [i for i in inst_idx_list[0] if not i < 0]
+        inst_tmp = [i for i in emb_idx_list[0] if not i < 0]
         if args.num_class == 10:
             inst_tmp = [VALID_INST[inst_dict[i].split('_')[0]] for i in inst_tmp]
         ans_one_hot[inst_tmp] = 1
@@ -227,5 +216,4 @@ if __name__ == "__main__":
 
     f.close()
     write_result(est_list, ans_list, ran_list, score_list, args)
-    
     
