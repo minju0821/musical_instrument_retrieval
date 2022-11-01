@@ -20,11 +20,11 @@ torch.manual_seed(0)
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--gpus', type=str, default="")
+    parser.add_argument('--gpus', type=str, default=None)
 
     parser.add_argument('--num_class', type=int, default=953)
     parser.add_argument('--num_epochs', type=int, default=100)
-    parser.add_argument("--dataset", type=str, default="rendered", choices=["rendered", "random_mix"])
+    parser.add_argument("--dataset", type=str, default="random_mix", choices=["rendered", "random_mix"])
     parser.add_argument("--model_size", type=str, default="Large", choices=["Large", "Small"])
     parser.add_argument('--batch_size', type=int, default=128)
     parser.add_argument('--lr', type=float, default=1e-3)
@@ -32,13 +32,11 @@ def parse_args():
     parser.add_argument("--get_idx", type=int, default=1, help="1 ~ 1000, read the instructions in dataset.py -> EmbeddingLibraryDataset")
     parser.add_argument("--eval_avg", type=str, default="macro", choices=["micro", "macro", "weighted"])
 
-    # "/data3/aiproducer_inst/f_emb/submission/multi_inst_emb"
     parser.add_argument('--nlakh_dataset_dir', type=str, default=None, help="Path to the rendered Nlakh multi dataset directory.")
-    # "/data4/aiproducer_inst/rendered_single_inst/"
     parser.add_argument('--random_dataset_dir', type=str, default=None, help="Path to the rendered Nlakh single dataset directory.")
-    # f'/data3/aiproducer_inst/f_emb/submission/single_inst_emb/{split}_default_nfft/*/'
-    parser.add_argument('--single_inst_emb_dir', type=str, default=None, required=True, help="Path to the output embeddings of single instruments processed with trained Single Instrument Encoder.")
-    parser.add_argument("--checkpoint_dir", type=str, default="/data3/aiproducer_inst/haessun_models/Multi_Instrument_Encoder")
+
+    parser.add_argument('--single_inst_emb_dir', type=str, default=None, help="Path to the output embeddings of single instruments processed with trained Single Instrument Encoder.")
+    parser.add_argument("--checkpoint_dir", type=str, default=None)
 
     parser.add_argument('--wandb', type=bool, default=True, help="Make it False when debugging.")
     parser.add_argument('--project_name', type=str, default='Multi Instrument Encoder')
@@ -63,14 +61,14 @@ def train(model, train_loader, optimizer, pit_func, epoch, args, DEVICE):
 
         train_loss.append(loss.item())
     
-    train_loss = np.mean(train_loss)
-    if args.wandb:
-        wandb.log({
-            "train_loss": train_loss,
-            "epoch": epoch,
-            "batch_idx": batch_idx
-        })
-    torch.save(model.state_dict(), f"{args.checkpoint_dir}/{args.dataset}/{epoch}_trLoss_{train_loss:.3f}.pt")
+        _train_loss = np.mean(train_loss)
+        if args.wandb:
+            wandb.log({
+                "train_loss": _train_loss,
+                "epoch": epoch,
+                "batch_idx": batch_idx
+            })
+    torch.save(model.state_dict(), f"{args.checkpoint_dir}/{args.dataset}/{epoch}_trLoss_{_train_loss:.3f}.pt")
     return
 
 def evaluate(model, valid_loader, lib, args, DEVICE):
@@ -88,7 +86,6 @@ def evaluate(model, valid_loader, lib, args, DEVICE):
         for batch_idx, data in tqdm(enumerate(valid_loader)):
             mix_audio, emb_list, inst_idxes, track_len = data[0].to(DEVICE), data[1].to(DEVICE), data[2], data[3].to(DEVICE)
             
-            # output = model(mix_audio.squeeze())
             output = model(mix_audio.squeeze().unsqueeze(dim=1).type(torch.float32))
             output = torch.reshape(output, (output.size()[0], 9, -1)) # (batch_size, 1024 * 9) -> (batch_size, 9, 1024)
             
@@ -134,13 +131,13 @@ def evaluate(model, valid_loader, lib, args, DEVICE):
         ran_list = np.asarray(ran_list)
         score_list = np.asarray(score_list)
 
-        f1 = f1_score(ans_list, est_list, average=args.avg)
-        f1_random = f1_score(ans_list, ran_list, average=args.avg)
-        recall = recall_score(ans_list, est_list, average=args.avg)
-        recall_random = recall_score(ans_list, ran_list, average=args.avg)
-        precision = precision_score(ans_list, est_list, average=args.avg)
-        precision_random = precision_score(ans_list, ran_list, average=args.avg)
-        mAP = average_precision_score(ans_list, score_list, average=args.avg)
+        f1 = f1_score(ans_list, est_list, average=args.eval_avg)
+        f1_random = f1_score(ans_list, ran_list, average=args.eval_avg)
+        recall = recall_score(ans_list, est_list, average=args.eval_avg)
+        recall_random = recall_score(ans_list, ran_list, average=args.eval_avg)
+        precision = precision_score(ans_list, est_list, average=args.eval_avg)
+        precision_random = precision_score(ans_list, ran_list, average=args.eval_avg)
+        mAP = average_precision_score(ans_list, score_list, average=args.eval_avg)
         print("F1 score : {:.3f}, Recall : {:.3f}, Precision : {:.3f}, mAP : {:.3f}".format(f1, recall, precision, mAP))
 
         if args.wandb:
@@ -185,12 +182,12 @@ if __name__=='__main__':
 
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
     if args.dataset == "rendered":
-        train_dataset = RenderedNlakhDataset(args.nlakh_dataset_dir, "train", args.loss)
+        train_dataset = RenderedNlakhDataset(args.nlakh_dataset_dir, "train")
     elif args.dataset == "random_mix":
         train_dataset = RandomMixMultiInstrumentDataset(audio_path=args.random_dataset_dir, single_inst_emb_path=args.single_inst_emb_dir, split="train")
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=4)
     
-    valid_dataset = RenderedNlakhDataset(data_path = args.data_dir, split = "valid")
+    valid_dataset = RenderedNlakhDataset(data_path = args.nlakh_dataset_dir, split = "valid")
     valid_loader = DataLoader(valid_dataset, batch_size=args.batch_size, num_workers=4, shuffle=False)
 
     # build target embedding library for multi_inst_encoder with 1 sample of given idx for each unseen instrument class.

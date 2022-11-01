@@ -4,7 +4,7 @@ import numpy as np
 from scipy.optimize import linear_sum_assignment
 from torch import nn
 
-""" This PITLossWrapper should get "CosineSimilarity" as input loss function."""
+""" This PITLossWrapper should get "CosineSimilarity" as input loss function. """
 
 class PITLossWrapper(nn.Module):
     r"""Permutation invariant loss wrapper.

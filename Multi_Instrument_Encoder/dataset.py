@@ -45,7 +45,7 @@ class RenderedNlakhDataset(Dataset):
                 mix = torch.tensor(mix, dtype=torch.float32)
             else:
                 emb_list[emb_list_idx] = torch.from_numpy(np.load(fname))
-                emb_idx_list[emb_list_idx] = int(fname.split('/')[-1][:-4])
+                emb_idx_list[emb_list_idx] = int(fname.split('/')[-1][:-8])
                 emb_list_idx += 1
 
         emb_list_idx = torch.tensor(emb_list_idx, dtype=torch.int32)
@@ -61,7 +61,7 @@ class RandomMixMultiInstrumentDataset(Dataset):
         elif self.split == "valid":
             self.num_inst = 53
 
-        self.single_emb_path = sorted(glob.glob(single_inst_emb_path + "/*/"))
+        self.single_emb_path = sorted(glob.glob(f"{single_inst_emb_path}/{split}/*/"))
         
         self.min_tracks = min_tracks
         self.max_tracks = max_tracks
