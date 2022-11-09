@@ -1,7 +1,15 @@
 # Nlakh
 
 ## Description
+
 - Nlakh consists of *Nlakh-single* that contains single-track audio and *Nlakh-multi* that contains mixture audio with separate tracks (stem) of each instrument.
+
+- The process of rendering a sample of Nlakh-single and Nlakh-multi is illustrated as below, and more details are in our paper.
+
+<img src="./nlakh.png" width="700" />
+
+
+- Some statistics of Nlakh dataset
 
 | Dataset | Size (Hours) | Number of Samples | Number of Instruments |
 |------|------|------|------|
