@@ -1,0 +1,13 @@
+librosa==0.9.2
+matplotlib==3.5.3
+natsort==8.2.0
+numpy==1.22.0
+pandas==1.5.1
+pathtools==0.1.2
+pretty-midi==0.2.9
+scipy==1.9.0
+timm==0.6.11
+torch==1.12.1
+torchmetrics==0.10.0
+torchsummary==1.5.1
+tqdm==4.64.0
