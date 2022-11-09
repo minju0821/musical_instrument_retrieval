@@ -43,7 +43,7 @@ python Single_Instrument_Encoder/train.py
 | [Small-Nlakh]() | DeepCNN | Nlakh | 0.482 | 0.524 | 0.553 | 0.597 |
 | [Large-Nlakh]() | ConvNeXT | Nlakh | 0.533 | 0.578 | 0.635 | 0.666 |
 | [Small-Random]() | DeepCNN | Randomly mixed | 0.528 | 0.543 | 0.598 | 0.615 |
-| [Large-Random]() | ConvNeXT | Randomly mixed | **0.694** | **0.712** | **0.752** | **0.760** |
+| [Large-Random](https://drive.google.com/file/d/1zm2h-SheNREfIphcB9n9CgzqJ5wHkVc9/view?usp=share_link) | ConvNeXT | Randomly mixed | **0.694** | **0.712** | **0.752** | **0.760** |
 
 
 ### Train on your dataset
