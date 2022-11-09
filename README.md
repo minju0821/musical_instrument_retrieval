@@ -25,7 +25,7 @@ For audio samples and demo, visit [our website](https://dour-stretch-5d5.notion.
 ### Pre-trained model
 | Model | EER |
 |------|------|
-| [Single-Intrument Encoder]() | 0.026 |
+| [Single-Intrument Encoder](https://github.com/minju0821/musical_instrument_retrieval/raw/main/models/pretrained_single_inst_enc) | 0.026 |
 
 
 ### Train on your dataset
