@@ -47,7 +47,7 @@ python Single_Instrument_Encoder/train.py
 
 
 ### Train on your dataset
-- Customize arguments in parseargs functions in train.py before training.
+- Customize arguments in parse_args functions in train.py before training.
 ```
 python Multi_Instrument_Encoder/train.py
 ```
