@@ -20,26 +20,31 @@
 
 
 ## Set up dataset
-- Nlakh can be downloaded at ~~
+- Nlakh can be downloaded at:
+    - [download Nlakh-single](https://drive.google.com/file/d/14Uav5LlZWvmqYEJenz4xDQMC7kjbszPC/view?usp=share_link)
+    - [download Nlakh-multi](https://drive.google.com/file/d/1MZBqvampGCkjZpCTMOXY517ymo0laiBc/view?usp=share_link)
 - The folder is structured as follows
 ```
-  Nlakh
-  ├── Nlakh_single
-  │   ├── train
-  │      │── 001
-  │          │── 0001.wav 
-  │              ...
-  │          │── 1000.wav
+ Nlakh-single
+  ├── train
+  │  │── 001
+  │      │── 0001.wav 
+  │           ...
+  │      │── 1000.wav
+  │       ...
+  │  │── 953
+  ├── valid
+  
+  
+ Nlakh-multi
+  ├── train
+  │  │── 000001
+  │      │── 124.wav 
   │          ...
-  │      │── 953
-  │   ├── valid
-  ├── Nlakh_multi
-  │   ├── train
-  │      │── 000001
-  │          │── 124.wav 
-  │              ...
-  │          │── 943.wav
-  │          │── mix.wav
-  │   ├── valid
+  │      │── 943.wav
+  │      │── mix.wav
+  │       ...
+  │  │── 100000
+  ├── valid
   
   ```
