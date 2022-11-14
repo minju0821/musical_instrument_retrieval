@@ -13,10 +13,10 @@
 
 | Dataset | Size (Hours) | Number of Samples | Number of Instruments |
 |------|------|------|------|
-| Nlakh-single (train) | 1,397 | 953,000 | 953 | 
-| Nlakh-single (valid) | ??? | 53,000 | 53 |
-| Nlakh-multi (train) | 153 | 100,000 | 953 |
-| Nlakh-multi (valid) | ??? | 10,000 | 53 |
+| Nlakh-single (train) | 1,323 | 953,000 | 953 | 
+| Nlakh-single (valid) | 74 | 53,000 | 53 |
+| Nlakh-multi (train) | 144 | 100,000 | 953 |
+| Nlakh-multi (valid) | 9 | 10,000 | 53 |
 
 
 ## Set up dataset
