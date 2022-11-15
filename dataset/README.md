@@ -6,7 +6,7 @@
 
 - The process of rendering a sample of Nlakh-single and Nlakh-multi is illustrated as below, and more details are in our paper.
 
-<img src="./nlakh.png" width="700" />
+<img src="./nlakh_figure.png" width="700" />
 
 
 - Some statistics of Nlakh dataset
