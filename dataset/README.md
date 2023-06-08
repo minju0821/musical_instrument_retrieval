@@ -21,8 +21,8 @@
 
 ## Set up dataset
 - Nlakh can be downloaded at:
-    - [download Nlakh-single](https://drive.google.com/file/d/14Uav5LlZWvmqYEJenz4xDQMC7kjbszPC/view?usp=share_link)
-    - [download Nlakh-multi](https://drive.google.com/file/d/1MZBqvampGCkjZpCTMOXY517ymo0laiBc/view?usp=share_link)
+    - [download Nlakh-single](https://www.dropbox.com/s/x4ssq5nlhmvp4k7/nlakh-single.tar.gz?dl=0)
+    - [download Nlakh-multi](https://www.dropbox.com/s/4sl6enmslzq7uob/nlakh-multi.tar.gz?dl=0)
 - The folder is structured as follows
 ```
  Nlakh-single
